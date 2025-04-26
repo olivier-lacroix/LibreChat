@@ -29,7 +29,7 @@ async function connectDb() {
       // useNewUrlParser: true,
       // useUnifiedTopology: true,
       // bufferMaxEntries: 0,
-      // useFindAndModify: true,
+      useFindAndModify: true,
       // useCreateIndex: true
     };
 

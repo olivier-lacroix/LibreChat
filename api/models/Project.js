@@ -31,15 +31,26 @@ const getProjectById = async function (projectId, fieldsToSelect = null) {
  */
 const getProjectByName = async function (projectName, fieldsToSelect = null) {
   const query = { name: projectName };
-  const update = { $setOnInsert: { name: projectName } };
-  const options = {
-    new: true,
-    upsert: projectName === GLOBAL_PROJECT_NAME,
-    lean: true,
-    select: fieldsToSelect,
-  };
 
-  return await Project.findOneAndUpdate(query, update, options);
+  // First try to find the project
+  let projectQuery = Project.findOne(query);
+  if (fieldsToSelect) {
+    projectQuery = projectQuery.select(fieldsToSelect);
+  }
+  let project = await projectQuery.lean();
+
+  // If not found, and projectName === GLOBAL_PROJECT_NAME, create it
+  if (!project && projectName === GLOBAL_PROJECT_NAME) {
+    await Project.create({ name: projectName });
+    // Then fetch it again
+    let newProjectQuery = Project.findOne(query);
+    if (fieldsToSelect) {
+      newProjectQuery = newProjectQuery.select(fieldsToSelect);
+    }
+    project = await newProjectQuery.lean();
+  }
+
+  return project;
 };
 
 /**

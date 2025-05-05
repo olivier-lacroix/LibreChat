@@ -112,8 +112,7 @@ const createMeiliMongooseModel = function ({ index, attributesToIndex }) {
               (doc.title && doc.title !== mongoMap.get(id).title)
             ) {
               logger.debug(
-                `[syncWithMeili] ${id} had document discrepancy in ${
-                  doc.text ? 'text' : 'title'
+                `[syncWithMeili] ${id} had document discrepancy in ${doc.text ? 'text' : 'title'
                 } field`,
               );
               updateOps.push({
@@ -152,8 +151,7 @@ const createMeiliMongooseModel = function ({ index, attributesToIndex }) {
         if (updateOps.length > 0) {
           await this.collection.bulkWrite(updateOps);
           logger.debug(
-            `[syncWithMeili] Finished indexing ${
-              primaryKey === 'messageId' ? 'messages' : 'conversations'
+            `[syncWithMeili] Finished indexing ${primaryKey === 'messageId' ? 'messages' : 'conversations'
             }`,
           );
         }
@@ -354,7 +352,6 @@ module.exports = function mongoMeili(schema, options) {
     _meiliIndex: {
       type: Boolean,
       required: false,
-      select: false,
       default: false,
     },
   });
@@ -458,7 +455,7 @@ module.exports = function mongoMeili(schema, options) {
       } catch (error) {
         logger.debug(
           '[MeiliMongooseModel.findOneAndUpdate] Convo not found in MeiliSearch and will index ' +
-            doc.conversationId,
+          doc.conversationId,
           error,
         );
       }

@@ -31,23 +31,32 @@ const getProjectById = async function (projectId, fieldsToSelect = null) {
  */
 const getProjectByName = async function (projectName, fieldsToSelect = null) {
   const query = { name: projectName };
+  const update = { $setOnInsert: { name: projectName } };
+  const options = {
+    new: true,
+    upsert: projectName === GLOBAL_PROJECT_NAME,
+    lean: true,
+    // 'projection/fields' is not supported in Firestore for now, so we do that manually after the findOneAndUpdate query
+    // select: fieldsToSelect,
+  };
 
-  // First try to find the project
-  let projectQuery = Project.findOne(query);
-  if (fieldsToSelect) {
-    projectQuery = projectQuery.select(fieldsToSelect);
-  }
-  let project = await projectQuery.lean();
+  // Step 1: Perform the findOneAndUpdate
+  let project = await Project.findOneAndUpdate(query, update, options);
 
-  // If not found, and projectName === GLOBAL_PROJECT_NAME, create it
-  if (!project && projectName === GLOBAL_PROJECT_NAME) {
-    await Project.create({ name: projectName });
-    // Then fetch it again
-    let newProjectQuery = Project.findOne(query);
-    if (fieldsToSelect) {
-      newProjectQuery = newProjectQuery.select(fieldsToSelect);
+  // Step 2: Handle the field selection manually
+  if (project && fieldsToSelect) {
+    const hasOwn = Object.prototype.hasOwnProperty;
+
+    if (Array.isArray(fieldsToSelect)) {
+      project = fieldsToSelect.reduce((result, field) => {
+        if (hasOwn.call(project, field)) {
+          result[field] = project[field];
+        }
+        return result;
+      }, {});
+    } else if (typeof fieldsToSelect === 'string' && hasOwn.call(project, fieldsToSelect)) {
+      project = { [fieldsToSelect]: project[fieldsToSelect] };
     }
-    project = await newProjectQuery.lean();
   }
 
   return project;

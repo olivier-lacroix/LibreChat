@@ -28,6 +28,36 @@ const port = Number(PORT) || 3080;
 const host = HOST || 'localhost';
 const trusted_proxy = Number(TRUST_PROXY) || 1; /* trust first proxy by default */
 
+const mongoose = require('mongoose');
+
+// Save the original `findOneAndUpdate` method
+const originalFindOneAndUpdate = mongoose.Collection.prototype.findOneAndUpdate;
+
+// Patch the method
+mongoose.Collection.prototype.findOneAndUpdate = async function (filter, update, options = {}) {
+
+  const {
+    projection,   // projection/fields to return
+    ...restOptions // rest of the options
+  } = options;
+
+  // Identify any projection/fields (`select`, `projection`, `fields`) and log their removal
+  if (projection) {
+    console.warn(
+      `⚠️ [findOneAndUpdate PATCH WARNING] Projection/field selection removed:`,
+      { projection },
+      `Context:`,
+      { filter, update, options },
+    );
+  }
+
+  // Remove the projection-related fields (select, projection, fields)
+  const sanitizedOptions = { ...restOptions };
+
+  // Pass the updated options to the original method
+  return await originalFindOneAndUpdate.call(this, filter, update, sanitizedOptions);
+};
+
 const startServer = async () => {
   if (typeof Bun !== 'undefined') {
     axios.defaults.headers.common['Accept-Encoding'] = 'gzip';
